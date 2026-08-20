@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hypixel BedWars 玩家数据 Dashboard">
+    <title>Hypixel BedWars Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="stars-layer" id="starsLayer" aria-hidden="true"></div>
+    <div class="gradient-overlay" aria-hidden="true"></div>
+
+    <div class="container">
+        <!-- 顶部导航 -->
+        <header class="site-header">
+            <div class="logo">
+                <span class="logo-icon">⚔</span>
+                <span class="logo-text">BedWars Dashboard</span>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link active">Dashboard</a>
+                <a href="friends.html" class="nav-link">好友列表</a>
+            </nav>
+            <div class="header-meta">
+                <span class="cache-badge" id="cacheBadge" hidden></span>
+                <button class="refresh-btn" id="refreshBtn" title="刷新数据">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                    </svg>
+                    刷新
+                </button>
+            </div>
+        </header>
+
+        <!-- 加载状态 -->
+        <div class="loading-state" id="loadingState">
+            <div class="loader"></div>
+            <p>正在从 Hypixel 获取数据...</p>
+        </div>
+
+        <!-- 错误状态 -->
+        <div class="error-state" id="errorState" hidden>
+            <div class="error-icon">⚠</div>
+            <h2>数据加载失败</h2>
+            <p id="errorMessage">请稍后重试</p>
+            <p class="error-hint" id="errorHint" hidden></p>
+            <button class="retry-btn" id="retryBtn">重新加载</button>
+        </div>
+
+        <!-- 主内容 -->
+        <main class="dashboard" id="dashboard" hidden>
+            <!-- 玩家资料卡 -->
+            <section class="player-card glass-card">
+                <div class="player-card-inner">
+                    <div class="player-skin">
+                        <div class="skin-glow"></div>
+                        <img id="playerSkin" src="" alt="玩家皮肤" class="skin-image">
+                    </div>
+                    <div class="player-info">
+                        <h1 class="player-name" id="playerName">—</h1>
+                        <div class="player-rank" id="playerRank">Default</div>
+                        <div class="player-meta-grid">
+                            <div class="meta-item">
+                                <span class="meta-label">Network Level</span>
+                                <span class="meta-value highlight" id="networkLevel">—</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Karma</span>
+                                <span class="meta-value highlight" id="karma">—</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Achievement Points</span>
+                                <span class="meta-value highlight" id="achievementPoints">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BedWars 星级 -->
+            <section class="star-section glass-card">
+                <div class="star-header">
+                    <span class="section-label">BedWars 星级</span>
+                    <span class="star-number" id="starNumber">0</span>
+                </div>
+                <div class="star-progress-wrap">
+                    <div class="star-progress-bar">
+                        <div class="star-progress-fill" id="starProgressFill"></div>
+                    </div>
+                    <div class="star-exp-text">
+                        <span id="currentExp">0</span>
+                        <span class="exp-separator">/</span>
+                        <span id="requiredExp">0</span>
+                        <span class="exp-label">EXP</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 核心统计卡片 -->
+            <section class="stats-grid">
+                <div class="stat-card glass-card" data-stat="fkdr">
+                    <div class="stat-icon">🗡</div>
+                    <div class="stat-label">FKDR</div>
+                    <div class="stat-value" id="statFkdr">0.00</div>
+                    <div class="stat-desc">Final Kill / Death Ratio</div>
+                </div>
+                <div class="stat-card glass-card" data-stat="kdr">
+                    <div class="stat-icon">⚔</div>
+                    <div class="stat-label">KDR</div>
+                    <div class="stat-value" id="statKdr">0.00</div>
+                    <div class="stat-desc">Kill / Death Ratio</div>
+                </div>
+                <div class="stat-card glass-card" data-stat="winrate">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="statWinRate">0.00%</div>
+                    <div class="stat-desc">胜率</div>
+                </div>
+                <div class="stat-card glass-card" data-stat="bblr">
+                    <div class="stat-icon">🛏</div>
+                    <div class="stat-label">BBLR</div>
+                    <div class="stat-value" id="statBblr">0.00</div>
+                    <div class="stat-desc">Bed Break / Lost Ratio</div>
+                </div>
+            </section>
+
+            <!-- 详细数据表格 -->
+            <section class="details-section glass-card">
+                <h2 class="section-title">
+                    <span class="title-icon">📊</span>
+                    详细数据
+                </h2>
+                <div class="details-table-wrap">
+                    <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>统计项</th>
+                                <th>数值</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsTableBody">
+                            <!-- 由 JS 动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="site-footer">
+            <p>数据来源 <a href="https://hypixel.net" target="_blank" rel="noopener">Hypixel API</a> · 缓存 60 秒</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hypixel 私人好友管理系统">
+    <title>好友列表 · Hypixel Friends</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-friends">
+    <div class="stars-layer" id="starsLayer" aria-hidden="true"></div>
+    <div class="gradient-overlay" aria-hidden="true"></div>
+
+    <div class="container">
+        <header class="site-header">
+            <div class="logo">
+                <span class="logo-icon">👥</span>
+                <span class="logo-text">Friends Manager</span>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Dashboard</a>
+                <a href="friends.html" class="nav-link active">好友列表</a>
+            </nav>
+            <div class="header-meta">
+                <span class="cache-badge" id="cacheBadge" hidden></span>
+                <span class="online-count" id="onlineCount" hidden></span>
+                <button class="refresh-btn" id="refreshBtn" title="刷新数据">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                    </svg>
+                    刷新
+                </button>
+            </div>
+        </header>
+
+        <div class="loading-state" id="loadingState">
+            <div class="loader"></div>
+            <p>正在加载好友数据...</p>
+        </div>
+
+        <div class="error-state" id="errorState" hidden>
+            <div class="error-icon">⚠</div>
+            <h2>数据加载失败</h2>
+            <p id="errorMessage">请稍后重试</p>
+            <p class="error-hint" id="errorHint" hidden></p>
+            <button class="retry-btn" id="retryBtn">重新加载</button>
+        </div>
+
+        <main class="friends-main page-content" id="friendsMain" hidden>
+            <div class="friends-toolbar glass-card">
+                <div class="toolbar-info">
+                    <h1 class="page-title">好友列表</h1>
+                    <p class="page-subtitle">自动排序：在线 → 刚离线 → 离线较久 · 每 60 秒刷新</p>
+                </div>
+                <div class="toolbar-actions">
+                    <button class="edit-friends-btn" id="editFriendsBtn" type="button" title="编辑好友名单">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        管理好友
+                    </button>
+                    <div class="toolbar-legend">
+                        <span class="legend-item"><span class="status-dot online"></span> 在线</span>
+                        <span class="legend-item"><span class="status-dot offline"></span> 离线</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="friends-empty" id="friendsEmpty" hidden>
+                <div class="empty-icon">📋</div>
+                <h2>好友列表为空</h2>
+                <p>点击右上角「管理好友」添加玩家，或配置 1Panel 计划任务每 5 分钟执行 <code>api/tracker.php</code></p>
+                <button class="retry-btn" id="emptyEditBtn" type="button">添加好友</button>
+            </div>
+
+            <div class="friends-grid" id="friendsGrid"></div>
+        </main>
+
+        <footer class="site-footer">
+            <p>数据来源 <a href="https://hypixel.net" target="_blank" rel="noopener">Hypixel API</a> · 在线状态由 tracker 定时记录</p>
+        </footer>
+    </div>
+
+    <!-- 好友编辑弹窗 -->
+    <div class="modal-overlay" id="editModal" hidden>
+        <div class="modal-card glass-card" role="dialog" aria-labelledby="editModalTitle">
+            <div class="modal-header">
+                <h2 id="editModalTitle">管理好友名单</h2>
+                <button class="modal-close" id="editModalClose" type="button" aria-label="关闭">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="edit-password-section" id="editPasswordSection" hidden>
+                    <label class="edit-label" for="editPassword">编辑密码</label>
+                    <input class="edit-input" id="editPassword" type="password" placeholder="请输入编辑密码" autocomplete="current-password">
+                    <p class="edit-hint">密码在 api/config.php 的 FRIENDS_EDIT_PASSWORD 中设置</p>
+                </div>
+
+                <div class="edit-add-row">
+                    <input class="edit-input" id="newFriendInput" type="text" placeholder="输入 Minecraft 玩家名" maxlength="16">
+                    <button class="edit-add-btn" id="addFriendBtn" type="button">添加</button>
+                </div>
+
+                <div class="edit-list-wrap">
+                    <div class="edit-list-header">
+                        <span>当前好友 <strong id="editFriendCount">0</strong> 人</span>
+                        <span class="edit-limit" id="editFriendLimit"></span>
+                    </div>
+                    <ul class="edit-friends-list" id="editFriendsList"></ul>
+                    <p class="edit-empty" id="editListEmpty" hidden>暂无好友，在上方输入玩家名添加</p>
+                </div>
+
+                <p class="edit-status" id="editStatus" hidden></p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="editCancelBtn" type="button">取消</button>
+                <button class="modal-btn primary" id="editSaveBtn" type="button">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="friends.js"></script>
+</body>
+</html>
